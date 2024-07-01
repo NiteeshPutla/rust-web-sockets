@@ -11,6 +11,8 @@ pub async fn register_handler(body: RegisterRequest, clients: Clients) -> Result
 }
 
 
+// Registering
+
 async fn register_client(id: String, user_id: usize, clients: Clients){
 
     Clients.lock().await.insert(
@@ -27,7 +29,7 @@ pub fn health_handler() ->  impl Future<Output = Result<impl Reply>>{
     futures:: future::ready(Ok(StatusCode::Ok))
 }
 
-
+//De-register
 pub async fn unregister_handler(id: String, clients: Clients)-> Result<impl Reply> {
     clients.lock().await.remove(&id);
     Ok(StatusCode::Ok)
@@ -51,7 +53,22 @@ pub async fn client_connection(ws:WebSocket, id: String, clients: Clients, mut c
     let (client_sender, client_rcv) = mpsc:: unbounded_channel();
 
     let client_rcv = UnboundedReceiverStream:: new(client_rcv);
-    tokio::task::spawn(client_rcv.forward(client_ws_sender))
+    tokio:: task ::spawn(client_rcv.forward(client_ws_sender).map(|result|{
 
-
+        if let Err(e) = result{
+            eprintln!("error sending websocket msg: {}", e )
+        }
+    }));
 }
+
+
+
+
+
+
+
+
+
+
+
+
